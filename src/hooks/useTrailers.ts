@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { MOCK_API_RESPONSE } from '../data/mockTrailers';
 
 export interface Trailer {
     id: string;
@@ -10,6 +11,39 @@ export interface Trailer {
     ezRentOutLink: string;
 }
 
+
+// Let's use a nice semi-truck image as requested
+const GENERIC_TRAILER = "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80";
+
+const mapAssetToTrailer = (asset: any, subdomain: string): Trailer => {
+    // Try to find a valid image URL
+    const validImage = asset.image_url || asset.image || asset.display_image || (asset.images && asset.images.length > 0 ? asset.images[0].url : null);
+
+    // Use generic image if the found image is the 'no-image' placeholder
+    const finalImage = (!validImage || validImage.includes('no-image')) ? GENERIC_TRAILER : validImage;
+
+    // Construct description
+    let desc = asset.description || asset.name;
+    if (asset.Year && asset.Model) {
+        desc = `${asset.Year} ${asset.Model} - ${desc}`;
+    }
+
+    return {
+        id: asset.id || asset.sequence_num || `mock-${Math.random()}`,
+        name: asset.name,
+        type: mapCategory(asset.group_name),
+        image: finalImage,
+        price: asset.rental_prices?.monthly ? (asset.rental_prices.monthly === "0.0" ? "Call for pricing" : `$${asset.rental_prices.monthly}/mo`) : "Call for pricing",
+        description: desc,
+        ezRentOutLink: `https://${subdomain}.ezrentout.com/item/view/${asset.sequence_num || asset.id}`
+    };
+};
+
+// Generate Mock Trailers from the imported data
+const MOCK_TRAILERS: Trailer[] = MOCK_API_RESPONSE.assets.map(asset =>
+    mapAssetToTrailer(asset, import.meta.env.VITE_EZRENTOUT_SUBDOMAIN || 'fleetcotrailers')
+);
+
 export function useTrailers(page: number = 1) {
     const [trailers, setTrailers] = useState<Trailer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -17,8 +51,7 @@ export function useTrailers(page: number = 1) {
     const [totalPages, setTotalPages] = useState(1);
 
 
-    // Let's use a nice semi-truck image as requested
-    const GENERIC_TRAILER = "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80";
+
 
     useEffect(() => {
         const fetchTrailers = async () => {
@@ -79,33 +112,7 @@ export function useTrailers(page: number = 1) {
                 }
 
                 // Map Assets
-                const mappedTrailers: Trailer[] = assetsArray.map((asset: any) => {
-                    // Try to find a valid image URL from various potential API fields
-                    // EZRentOut API might use 'image_url', 'image', 'display_image', or nested 'images' array
-                    const validImage = asset.image_url || asset.image || asset.display_image || (asset.images && asset.images.length > 0 ? asset.images[0].url : null);
-
-                    // Debug first item's image detection
-                    if (asset === assetsArray[0]) {
-                        console.log("Debug Image Detection (First Asset):", {
-                            name: asset.name,
-                            foundImage: validImage,
-                            raw_image_url: asset.image_url,
-                            raw_image: asset.image,
-                            raw_images_array: asset.images
-                        });
-                    }
-
-                    return {
-                        id: asset.id || asset.sequence_num,
-                        name: asset.name,
-                        type: mapCategory(asset.group_name),
-                        // Use actual image or generic fallback
-                        image: validImage && validImage !== '' ? validImage : GENERIC_TRAILER,
-                        price: "Call for pricing",
-                        description: asset.description || asset.name,
-                        ezRentOutLink: `https://${subdomain}.ezrentout.com/item/view/${asset.sequence_num || asset.id}`
-                    };
-                });
+                const mappedTrailers: Trailer[] = assetsArray.map((asset: any) => mapAssetToTrailer(asset, subdomain));
 
                 setTrailers(mappedTrailers);
                 setError(null);
@@ -139,59 +146,4 @@ function mapCategory(groupName: string): Trailer['type'] {
     return 'Road Trailer';
 }
 
-const MOCK_TRAILERS: Trailer[] = [
-    {
-        id: '1',
-        name: '53\' Dry Van',
-        type: 'Road Trailer',
-        price: 'Call for pricing',
-        image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&q=80',
-        description: 'Standard 53ft dry van perfect for palletized freight. Watertight and road-ready.',
-        ezRentOutLink: '#'
-    },
-    {
-        id: '2',
-        name: 'Reefer Trailer',
-        type: 'Road Trailer',
-        price: 'Call for pricing',
-        image: 'https://images.unsplash.com/photo-1542385151-efd9000785a0?auto=format&fit=crop&q=80',
-        description: 'Temperature controlled units for perishable goods transport.',
-        ezRentOutLink: '#'
-    },
-    {
-        id: '3',
-        name: '40\' Storage Container',
-        type: 'Storage Trailer',
-        price: 'Call for pricing',
-        image: 'https://images.unsplash.com/photo-1566576912906-25433d76e33f?auto=format&fit=crop&q=80',
-        description: 'Secure, ground-level storage solution for construction sites or retail inventory.',
-        ezRentOutLink: '#'
-    },
-    {
-        id: '4',
-        name: 'Flatbed',
-        type: 'Flatbed',
-        price: 'Call for pricing',
-        image: 'https://images.unsplash.com/photo-1605218427306-651c6c0b378c?auto=format&fit=crop&q=80',
-        description: 'Heavy duty flatbed for oversized loads and construction equipment.',
-        ezRentOutLink: '#'
-    },
-    {
-        id: '5',
-        name: '28\' Pup Trailer',
-        type: 'Road Trailer',
-        price: 'Call for pricing',
-        image: 'https://images.unsplash.com/photo-1625216834114-1188177ba7f2?auto=format&fit=crop&q=80',
-        description: 'Short maneuverable trailer for local city deliveries.',
-        ezRentOutLink: '#'
-    },
-    {
-        id: '6',
-        name: 'Drop Deck',
-        type: 'Flatbed',
-        price: 'Call for pricing',
-        image: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80',
-        description: 'Specialized flatbed for tall cargo transport.',
-        ezRentOutLink: '#'
-    }
-];
+
