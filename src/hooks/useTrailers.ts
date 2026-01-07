@@ -39,10 +39,7 @@ const mapAssetToTrailer = (asset: any, subdomain: string): Trailer => {
     };
 };
 
-// Generate Mock Trailers from the imported data
-const MOCK_TRAILERS: Trailer[] = MOCK_API_RESPONSE.assets.map(asset =>
-    mapAssetToTrailer(asset, import.meta.env.VITE_EZRENTOUT_SUBDOMAIN || 'fleetcotrailers')
-);
+
 
 // Cache keys
 const CACHE_KEY = 'fleetco_trailers_data';
