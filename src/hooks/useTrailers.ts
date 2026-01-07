@@ -44,96 +44,118 @@ const MOCK_TRAILERS: Trailer[] = MOCK_API_RESPONSE.assets.map(asset =>
     mapAssetToTrailer(asset, import.meta.env.VITE_EZRENTOUT_SUBDOMAIN || 'fleetcotrailers')
 );
 
+// Cache keys
+const CACHE_KEY = 'fleetco_trailers_data';
+const CACHE_TIMESTAMP_KEY = 'fleetco_trailers_timestamp';
+const CACHE_DURATION = 60 * 60 * 1000; // 1 Hour in milliseconds
+
 export function useTrailers(page: number = 1) {
     const [trailers, setTrailers] = useState<Trailer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [totalPages, setTotalPages] = useState(1);
 
-
-
+    const PAGE_SIZE = 18;
 
     useEffect(() => {
-        const fetchTrailers = async () => {
+        const loadTrailers = async () => {
             setLoading(true);
-            const subdomain = import.meta.env.VITE_EZRENTOUT_SUBDOMAIN;
-            const token = import.meta.env.VITE_EZRENTOUT_TOKEN;
 
-            console.log(`Hooks: Fetching page ${page}...`);
+            // 1. Check Local Cache
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            const cachedTime = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+            const now = Date.now();
 
-            // Check if mock data should be used
-            if (!subdomain || !token || subdomain === 'your-subdomain') {
-                // Emulate pagination for mock data
-                const PAGE_SIZE = 24;
-                const start = (page - 1) * PAGE_SIZE;
-                const paginatedMock = MOCK_TRAILERS.slice(start, start + PAGE_SIZE);
-                setTrailers(paginatedMock);
-                setTotalPages(Math.ceil(MOCK_TRAILERS.length / PAGE_SIZE));
+            if (cachedData && cachedTime && (now - parseInt(cachedTime) < CACHE_DURATION)) {
+                console.log("Using cached data (Valid for 1 hour)");
+                const allTrailers = JSON.parse(cachedData);
+                paginateAndSet(allTrailers);
                 setLoading(false);
                 return;
             }
 
+            // 2. Fetch Fresh Data (if cache invalid/missing)
+            console.log("Cache expired or missing. Fetching fresh data...");
+            const subdomain = import.meta.env.VITE_EZRENTOUT_SUBDOMAIN;
+            const token = import.meta.env.VITE_EZRENTOUT_TOKEN;
+
+            // Use Fallback if no credentials (likely live site)
+            if (!subdomain || !token || subdomain === 'your-subdomain') {
+                useFallbackData();
+                return;
+            }
+
             try {
-                // Construct URL based on environment
-                // In DEV: Use local proxy (/api/ezrentout) to handle CORS
-                // In PROD: Use direct URL (requires API to support CORS)
-                const baseUrl = import.meta.env.DEV
-                    ? '/api/ezrentout'
-                    : `https://${subdomain}.ezrentout.com`;
+                const allAssets: any[] = [];
+                let currentPage = 1;
+                let totalApiPages = 1;
+                const baseUrl = import.meta.env.DEV ? '/api/ezrentout' : `https://${subdomain}.ezrentout.com`;
 
-                const fetchUrl = `${baseUrl}/assets.api?show_image_urls=true&include_custom_fields=true&page=${page}`;
-                console.log("Fetching URL:", fetchUrl);
+                // Initial fetch to get total pages and first batch
+                // We'll just loop until we get everything or hit a limit
+                do {
+                    console.log(`Fetching API page ${currentPage}...`);
+                    const response = await fetch(`${baseUrl}/assets.api?show_image_urls=true&include_custom_fields=true&page=${currentPage}`, {
+                        headers: { 'token': token }
+                    });
 
-                const response = await fetch(fetchUrl, {
-                    headers: { 'token': token }
-                });
+                    if (!response.ok) throw new Error(`API Error ${response.status}`);
 
-                if (!response.ok) {
+                    const json = await response.json();
 
-                    throw new Error(`API Error ${response.status}`);
-                }
+                    // Normalize assets array
+                    let pageAssets: any[] = [];
+                    if (Array.isArray(json)) pageAssets = json;
+                    else if (json.assets) pageAssets = json.assets;
+                    else pageAssets = []; // Handle edge cases
 
-                const json = await response.json();
+                    if (pageAssets.length === 0) break; // Stop if no assets returned
 
+                    allAssets.push(...pageAssets);
 
-                // Handle Total Pages
-                if (json.total_pages && typeof json.total_pages === 'number') {
-                    setTotalPages(json.total_pages);
-                }
+                    // Update loop vars
+                    if (json.total_pages) totalApiPages = json.total_pages;
+                    currentPage++;
 
-                // Extract Assets
-                let assetsArray: any[] = [];
-                if (Array.isArray(json)) assetsArray = json;
-                else if (json.assets) assetsArray = json.assets;
-                else if (json.fixed_assets) assetsArray = json.fixed_assets;
-                else {
-                    const key = Object.keys(json).find(k => Array.isArray(json[k]));
-                    if (key) assetsArray = json[key];
-                }
+                } while (currentPage <= totalApiPages && currentPage <= 20); // Safety limit of 20 pages
 
-                // Map Assets
-                const mappedTrailers: Trailer[] = assetsArray.map((asset: any) => mapAssetToTrailer(asset, subdomain));
+                // Process and Cache
+                const mappedTrailers = allAssets.map(asset => mapAssetToTrailer(asset, subdomain));
 
-                setTrailers(mappedTrailers);
+                localStorage.setItem(CACHE_KEY, JSON.stringify(mappedTrailers));
+                localStorage.setItem(CACHE_TIMESTAMP_KEY, now.toString());
+
+                paginateAndSet(mappedTrailers);
                 setError(null);
 
             } catch (err) {
-                console.warn("Fetch failed (likely CORS on live site), falling back to mock data:", err);
-
-                // Fallback to Mock Data
-                const PAGE_SIZE = 24;
-                const start = (page - 1) * PAGE_SIZE;
-                const paginatedMock = MOCK_TRAILERS.slice(start, start + PAGE_SIZE);
-                setTrailers(paginatedMock);
-                setTotalPages(Math.ceil(MOCK_TRAILERS.length / PAGE_SIZE));
-                setError(null);
+                console.warn("API Fetch failed, using fallback:", err);
+                useFallbackData();
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchTrailers();
-    }, [page]); // Re-run when page changes
+        // Helper to slice data for current page
+        const paginateAndSet = (allData: Trailer[]) => {
+            const start = (page - 1) * PAGE_SIZE;
+            const paginated = allData.slice(start, start + PAGE_SIZE);
+            setTrailers(paginated);
+            setTotalPages(Math.ceil(allData.length / PAGE_SIZE));
+        };
+
+        // Helper to load mock data
+        const useFallbackData = () => {
+            console.log("Loading fallback mock data...");
+            const subdomain = import.meta.env.VITE_EZRENTOUT_SUBDOMAIN || 'fleetcotrailers';
+            // Map the imported JSON data
+            // @ts-ignore
+            const allMockTrailers = MOCK_API_RESPONSE.assets.map(asset => mapAssetToTrailer(asset, subdomain));
+            paginateAndSet(allMockTrailers);
+        };
+
+        loadTrailers();
+    }, [page]);
 
     return { trailers, loading, error, totalPages };
 }
