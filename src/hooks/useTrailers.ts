@@ -64,7 +64,7 @@ export function useTrailers(page: number = 1) {
             // Check if mock data should be used
             if (!subdomain || !token || subdomain === 'your-subdomain') {
                 // Emulate pagination for mock data
-                const PAGE_SIZE = 6;
+                const PAGE_SIZE = 24;
                 const start = (page - 1) * PAGE_SIZE;
                 const paginatedMock = MOCK_TRAILERS.slice(start, start + PAGE_SIZE);
                 setTrailers(paginatedMock);
@@ -121,7 +121,7 @@ export function useTrailers(page: number = 1) {
                 console.warn("Fetch failed (likely CORS on live site), falling back to mock data:", err);
 
                 // Fallback to Mock Data
-                const PAGE_SIZE = 6;
+                const PAGE_SIZE = 24;
                 const start = (page - 1) * PAGE_SIZE;
                 const paginatedMock = MOCK_TRAILERS.slice(start, start + PAGE_SIZE);
                 setTrailers(paginatedMock);
