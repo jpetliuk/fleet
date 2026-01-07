@@ -3,11 +3,15 @@ import { Gauge, Check } from 'lucide-react';
 
 interface ProductCardProps {
     trailer: Trailer;
+    index: number;
 }
 
-export default function ProductCard({ trailer }: ProductCardProps) {
+export default function ProductCard({ trailer, index }: ProductCardProps) {
     return (
-        <div className="bg-[#1A1A1A] rounded-xl overflow-hidden flex flex-col group cursor-pointer border border-white/5 hover:border-gray-600 transition-all h-full">
+        <div
+            className="bg-[#1A1A1A] rounded-xl overflow-hidden flex flex-col group cursor-pointer border border-white/5 hover:border-gray-600 transition-all h-full animate-fade-in opacity-0 fill-mode-forwards"
+            style={{ animationDelay: `${index * 50}ms` }}
+        >
             {/* Header */}
             <div className="p-4 md:p-5 relative z-10">
                 <div className="flex justify-between items-start mb-1">

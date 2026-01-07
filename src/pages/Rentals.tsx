@@ -102,8 +102,8 @@ export default function Rentals() {
                     ) : (
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                                {filteredTrailers.map((trailer) => (
-                                    <ProductCard key={trailer.id} trailer={trailer} />
+                                {filteredTrailers.map((trailer, index) => (
+                                    <ProductCard key={trailer.id} trailer={trailer} index={index} />
                                 ))}
                             </div>
 
