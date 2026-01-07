@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MOCK_API_RESPONSE } from '../data/mockTrailers';
+import MOCK_API_RESPONSE from '../data/full_mock_data.json';
 
 export interface Trailer {
     id: string;
