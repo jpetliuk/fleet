@@ -1,5 +1,6 @@
 
 import { Facebook, Linkedin } from 'lucide-react';
+import logo from '../../assets/logo.png';
 
 export default function Footer() {
     return (
@@ -10,7 +11,7 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                            <img src="/src/assets/logo.png" alt="Fleetco" className="h-8 w-auto brightness-0 invert" />
+                            <img src={logo} alt="Fleetco" className="h-8 w-auto brightness-0 invert" />
                             <span className="text-lg font-bold text-white tracking-tight">FLEETCO</span>
                         </div>
                         <div className="text-sm space-y-2">

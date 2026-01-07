@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
+import logo from '../../assets/logo.png';
+
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -14,7 +16,7 @@ export default function Navbar() {
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-3">
                         <img
-                            src="/src/assets/logo.png"
+                            src={logo}
                             alt="Fleetco"
                             className="h-10 w-auto"
                             style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(88%) saturate(3436%) hue-rotate(224deg) brightness(94%) contrast(96%)' }}
