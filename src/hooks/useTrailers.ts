@@ -41,8 +41,14 @@ export function useTrailers(page: number = 1) {
             }
 
             try {
-                // Fetch specific page
-                const fetchUrl = `/api/ezrentout/assets.api?show_image_urls=true&include_custom_fields=true&page=${page}`;
+                // Construct URL based on environment
+                // In DEV: Use local proxy (/api/ezrentout) to handle CORS
+                // In PROD: Use direct URL (requires API to support CORS)
+                const baseUrl = import.meta.env.DEV
+                    ? '/api/ezrentout'
+                    : `https://${subdomain}.ezrentout.com`;
+
+                const fetchUrl = `${baseUrl}/assets.api?show_image_urls=true&include_custom_fields=true&page=${page}`;
                 console.log("Fetching URL:", fetchUrl);
 
                 const response = await fetch(fetchUrl, {
