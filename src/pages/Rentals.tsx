@@ -23,7 +23,7 @@ export default function Rentals() {
             <div className="bg-[#111111] pt-32 pb-20 px-4 border-b border-white/10 relative overflow-hidden">
                 <div className="container mx-auto relative z-10 flex justify-between items-end">
                     <div>
-                        <h1 className="text-white text-5xl font-black uppercase tracking-tighter mb-4">Our <br /><span className="text-gray-500">Products</span></h1>
+                        <h1 className="text-white text-5xl font-black uppercase tracking-tighter mb-4">Our <br /><span className="text-gray-500">Rentals</span></h1>
                         <p className="text-gray-400 max-w-xl text-sm leading-relaxed">
                             Choose from a variety of rental trailers in this category including dry vans, reefers, and flatbeds.
                             Whether you are looking for short-term fixes or long-term leasing, we have the fleet.

@@ -1,5 +1,7 @@
 
 
+import heroBg from '../../assets/hero-bg.png';
+
 export default function Hero() {
     return (
         <div className="relative h-[600px] w-full overflow-hidden">
@@ -7,7 +9,7 @@ export default function Hero() {
             <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1599373976378-57d42530c332?auto=format&fit=crop&q=80")', // Semi Truck/Trailer image
+                    backgroundImage: `url(${heroBg})`,
                 }}
             >
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
