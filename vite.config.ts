@@ -14,6 +14,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/ezrentout/, ''),
           secure: false,
+        },
+        '/api/auth': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false,
         }
       }
     }

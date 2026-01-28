@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo.png';
 
 export default function Navbar() {
+    const { isAuthenticated, logout } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
@@ -65,9 +67,15 @@ export default function Navbar() {
 
                     {/* CTA Button */}
                     <div className="hidden md:block">
-                        <Link to="/login" className="border border-white/30 hover:border-primary hover:text-primary hover:bg-white/5 transition-all text-sm font-semibold px-5 py-2.5 rounded-full">
-                            Client Login
-                        </Link>
+                        {isAuthenticated ? (
+                            <Link to="/dashboard" className="border border-white/30 hover:border-primary hover:text-primary hover:bg-white/5 transition-all text-sm font-semibold px-5 py-2.5 rounded-full">
+                                My Dashboard
+                            </Link>
+                        ) : (
+                            <Link to="/login" className="border border-white/30 hover:border-primary hover:text-primary hover:bg-white/5 transition-all text-sm font-semibold px-5 py-2.5 rounded-full">
+                                Client Login
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -87,9 +95,20 @@ export default function Navbar() {
                         <Link to="/" className="text-gray-300 hover:text-primary sticky" onClick={() => setIsOpen(false)}>Home</Link>
                         <Link to="/about" className="text-gray-300 hover:text-primary sticky" onClick={() => setIsOpen(false)}>About</Link>
                         <Link to="/rentals" className="text-gray-300 hover:text-primary" onClick={() => setIsOpen(false)}>Trailer Rentals</Link>
-                        <Link to="/login" className="bg-primary text-white font-semibold py-3 rounded-lg w-full text-center block" onClick={() => setIsOpen(false)}>
-                            Client Login
-                        </Link>
+                        {isAuthenticated ? (
+                            <>
+                                <Link to="/dashboard" className="bg-white/10 text-white font-semibold py-3 rounded-lg w-full text-center block hover:bg-white/20" onClick={() => setIsOpen(false)}>
+                                    My Dashboard
+                                </Link>
+                                <button onClick={() => { logout(); setIsOpen(false); }} className="bg-primary text-white font-semibold py-3 rounded-lg w-full text-center block">
+                                    Log Out
+                                </button>
+                            </>
+                        ) : (
+                            <Link to="/login" className="bg-primary text-white font-semibold py-3 rounded-lg w-full text-center block" onClick={() => setIsOpen(false)}>
+                                Client Login
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}

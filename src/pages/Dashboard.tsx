@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { MOCK_USER, type Rental } from '../data/mock_user_data';
+import { useAuth } from '../context/AuthContext';
 import Layout from '../components/layout/Layout';
 import {
     Calendar, Truck, Clock, CheckCircle, Search,
@@ -75,14 +76,22 @@ const ActivityItem = ({ title, time, type }: { title: string, time: string, type
 
 
 export default function Dashboard() {
-    const user = MOCK_USER;
+    const { user } = useAuth();
+    // Fallback to mock rentals for now as requested
+    const rentals = MOCK_USER.rentals;
     const [filter, setFilter] = useState<'active' | 'completed' | 'upcoming'>('active');
 
-    const activeRental = user.rentals.find(r => r.status === 'Active');
+    const activeRental = rentals.find(r => r.status === 'Active');
 
-    const filteredRentals = user.rentals.filter(rental => {
+    const filteredRentals = rentals.filter(rental => {
         return rental.status.toLowerCase() === filter;
     });
+
+    if (!user) {
+        return null; // Or redirect to login
+    }
+
+    const displayName = user.firstName || user.email.split('@')[0];
 
     return (
         <Layout>
@@ -102,7 +111,7 @@ export default function Dashboard() {
                                 <span className="text-emerald-500 font-mono text-xs font-bold uppercase tracking-widest">Driver Account Verified</span>
                             </div>
                             <h1 className="text-white text-5xl font-black tracking-tight mb-4">
-                                Hello, <span className="text-gray-500">{user.name.split(' ')[0]}</span>
+                                Hello, <span className="text-gray-500">{displayName}</span>
                             </h1>
                             <p className="text-gray-400 max-w-xl text-lg font-light leading-relaxed">
                                 {activeRental

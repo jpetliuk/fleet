@@ -5,8 +5,8 @@ import {
     Lock, LogOut, Upload, Check
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { MOCK_USER } from '../data/mock_user_data';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const SectionHeader = ({ title, description }: { title: string, description: string }) => (
     <div className="mb-6">
@@ -15,16 +15,7 @@ const SectionHeader = ({ title, description }: { title: string, description: str
     </div>
 );
 
-const InputField = ({ label, defaultValue, type = "text" }: { label: string, defaultValue: string, type?: string }) => (
-    <div className="mb-4">
-        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{label}</label>
-        <input
-            type={type}
-            defaultValue={defaultValue}
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900"
-        />
-    </div>
-);
+
 
 const Toggle = ({ label, description, defaultChecked }: { label: string, description: string, defaultChecked: boolean }) => {
     const [checked, setChecked] = useState(defaultChecked);
@@ -45,8 +36,120 @@ const Toggle = ({ label, description, defaultChecked }: { label: string, descrip
 };
 
 export default function Settings() {
-    const user = MOCK_USER;
+    const { user, logout, updateUser } = useAuth();
     const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'billing'>('profile');
+
+    // Profile State
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [company, setCompany] = useState('');
+    const [address, setAddress] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
+
+    // Password State
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    // Initialize state when user loads
+    useEffect(() => {
+        if (user) {
+            setFirstName(user.firstName || '');
+            setLastName(user.lastName || '');
+            setEmail(user.email || '');
+            setPhone(user.phone || '');
+            setCompany(user.company || '');
+            setAddress(user.address || '');
+            setCity(user.city || '');
+            setState(user.state || '');
+        }
+    }, [user]);
+
+    if (!user) return null;
+
+    const fullNameHeader = firstName && lastName ? `${firstName} ${lastName}` : firstName || 'User';
+
+    const handleUpdateProfile = async () => {
+        setIsLoading(true);
+        setMessage(null);
+        try {
+            const token = localStorage.getItem('fleetco_token');
+            const response = await fetch('/api/auth/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    firstName,
+                    lastName,
+                    phone,
+                    company,
+                    address,
+                    city,
+                    state
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update profile');
+            }
+
+            updateUser(data.user);
+            setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.message });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUpdatePassword = async () => {
+        if (newPassword !== confirmPassword) {
+            setMessage({ type: 'error', text: 'New passwords do not match' });
+            return;
+        }
+
+        setIsLoading(true);
+        setMessage(null);
+        try {
+            const token = localStorage.getItem('fleetco_token');
+            const response = await fetch('/api/auth/password', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newPassword
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update password');
+            }
+
+            setMessage({ type: 'success', text: 'Password updated successfully!' });
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.message });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const menuItems = [
         { id: 'profile', label: 'Profile Settings', icon: User },
@@ -80,7 +183,10 @@ export default function Settings() {
                             {menuItems.map((item) => (
                                 <button
                                     key={item.id}
-                                    onClick={() => setActiveTab(item.id as any)}
+                                    onClick={() => {
+                                        setActiveTab(item.id as any);
+                                        setMessage(null);
+                                    }}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id
                                         ? 'bg-primary text-white shadow-md shadow-primary/30'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
@@ -91,7 +197,10 @@ export default function Settings() {
                                 </button>
                             ))}
                             <div className="h-px bg-gray-100 my-2 mx-2" />
-                            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors">
+                            <button
+                                onClick={() => logout()}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+                            >
                                 <LogOut size={18} /> Sign Out
                             </button>
                         </div>
@@ -105,6 +214,12 @@ export default function Settings() {
                                 <>
                                     <SectionHeader title="Profile Information" description="Update your personal details and driver credentials." />
 
+                                    {message && (
+                                        <div className={`p-4 mb-6 rounded-xl border text-sm font-bold ${message.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                            {message.text}
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-100">
                                         <div className="h-24 w-24 rounded-full bg-gray-100 flex items-center justify-center border-4 border-white shadow-lg overflow-hidden relative group cursor-pointer">
                                             {/* Placeholder Avatar */}
@@ -114,7 +229,7 @@ export default function Settings() {
                                             </div>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-bold text-gray-900">{user.name}</h3>
+                                            <h3 className="text-lg font-bold text-gray-900">{fullNameHeader}</h3>
                                             <p className="text-gray-500 text-sm mb-2">Verified Driver • Member since 2024</p>
                                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
                                                 <Check size={12} /> CDL Active
@@ -123,20 +238,46 @@ export default function Settings() {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <InputField label="Full Name" defaultValue={user.name} />
-                                        <InputField label="Email Address" defaultValue={user.email} type="email" />
-                                        <InputField label="Phone Number" defaultValue="+1 (555) 123-4567" type="tel" />
-                                        <InputField label="Company Name" defaultValue="Independent Operator" />
-                                        <div className="md:col-span-2">
-                                            <InputField label="Street Address" defaultValue="123 Hauler Lane" />
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">First Name</label>
+                                            <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
                                         </div>
-                                        <InputField label="City" defaultValue="Des Moines" />
-                                        <InputField label="State / Province" defaultValue="Iowa" />
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Last Name</label>
+                                            <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
+                                            <input type="email" value={email} disabled className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl font-medium text-gray-500 cursor-not-allowed" />
+                                        </div>
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Phone Number</label>
+                                            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Company Name</label>
+                                            <input type="text" value={company} onChange={e => setCompany(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
+                                        <div className="md:col-span-2 mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Street Address</label>
+                                            <input type="text" value={address} onChange={e => setAddress(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">City</label>
+                                            <input type="text" value={city} onChange={e => setCity(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">State / Province</label>
+                                            <input type="text" value={state} onChange={e => setState(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
                                     </div>
 
                                     <div className="mt-8 flex justify-end">
-                                        <button className="bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/30 hover:bg-primary-hover hover:-translate-y-0.5 transition-all">
-                                            Save Changes
+                                        <button
+                                            onClick={handleUpdateProfile}
+                                            disabled={isLoading}
+                                            className="bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/30 hover:bg-primary-hover hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+                                            {isLoading ? 'Saving...' : 'Save Changes'}
                                         </button>
                                     </div>
                                 </>
@@ -162,6 +303,12 @@ export default function Settings() {
                                 <>
                                     <SectionHeader title="Security & Login" description="Protect your account with updated credentials." />
 
+                                    {message && (
+                                        <div className={`p-4 mb-6 rounded-xl border text-sm font-bold ${message.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                            {message.text}
+                                        </div>
+                                    )}
+
                                     <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 mb-8 flex gap-4">
                                         <div className="p-2 bg-yellow-100 rounded-lg h-fit text-yellow-700">
                                             <Lock size={20} />
@@ -174,13 +321,25 @@ export default function Settings() {
                                     </div>
 
                                     <div className="max-w-md">
-                                        <InputField label="Current Password" defaultValue="" type="password" />
-                                        <InputField label="New Password" defaultValue="" type="password" />
-                                        <InputField label="Confirm New Password" defaultValue="" type="password" />
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Current Password</label>
+                                            <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">New Password</label>
+                                            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Confirm New Password</label>
+                                            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-900" />
+                                        </div>
 
                                         <div className="mt-6">
-                                            <button className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all">
-                                                Update Password
+                                            <button
+                                                onClick={handleUpdatePassword}
+                                                disabled={isLoading}
+                                                className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+                                                {isLoading ? 'Updating...' : 'Update Password'}
                                             </button>
                                         </div>
                                     </div>
