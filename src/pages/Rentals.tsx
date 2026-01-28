@@ -1,7 +1,7 @@
-
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import ProductCard from '../components/rentals/ProductCard';
+import TrailerDetails from '../components/rentals/TrailerDetails';
 import { useTrailers } from '../hooks/useTrailers';
 import { Filter, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
@@ -13,13 +13,53 @@ export default function Rentals() {
     const { trailers, loading, error, totalPages } = useTrailers(page);
     const [selectedCategory, setSelectedCategory] = useState<Category>('All');
 
+    // Selection & Layout State
+    const [selectedTrailerId, setSelectedTrailerId] = useState<string | null>(null);
+    const [numColumns, setNumColumns] = useState(1);
+
+    // Update column count on resize
+    useEffect(() => {
+        const updateColumns = () => {
+            if (typeof window !== 'undefined') {
+                if (window.innerWidth >= 1024) setNumColumns(3);
+                else if (window.innerWidth >= 768) setNumColumns(2);
+                else setNumColumns(1);
+            }
+        };
+        updateColumns();
+        window.addEventListener('resize', updateColumns);
+        return () => window.removeEventListener('resize', updateColumns);
+    }, []);
+
+
     const filteredTrailers = trailers.filter(trailer =>
         selectedCategory === 'All' ? true : trailer.type === selectedCategory
     );
 
+    const [isNavbarVisible, setIsNavbarVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+
+    useEffect(() => {
+        const controlNavbar = () => {
+            if (typeof window !== 'undefined') {
+                const currentScrollY = window.scrollY;
+
+                if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                    setIsNavbarVisible(false);
+                } else {
+                    setIsNavbarVisible(true);
+                }
+
+                setLastScrollY(currentScrollY);
+            }
+        };
+
+        window.addEventListener('scroll', controlNavbar);
+        return () => window.removeEventListener('scroll', controlNavbar);
+    }, [lastScrollY]);
+
     return (
         <Layout>
-            {/* ... keeping hero section unchanged ... */}
             <div className="bg-[#111111] pt-32 pb-20 px-4 border-b border-white/10 relative overflow-hidden">
                 <div className="container mx-auto relative z-10 flex justify-between items-end">
                     <div>
@@ -38,7 +78,12 @@ export default function Rentals() {
             </div>
 
             {/* Filters Toolbar */}
-            <div className="sticky top-20 z-40 bg-white border-b border-gray-200 shadow-sm">
+            <div
+                className={clsx(
+                    "sticky z-40 bg-white border-b border-gray-200 shadow-sm transition-all duration-300 ease-in-out",
+                    isNavbarVisible ? "top-20" : "top-0"
+                )}
+            >
                 <div className="container mx-auto px-4 py-4">
                     {/* Top Row: Categories */}
                     <div className="flex gap-8 text-sm font-bold text-gray-500 mb-4 overflow-x-auto no-scrollbar">
@@ -50,7 +95,10 @@ export default function Rentals() {
                         ].map((category) => (
                             <button
                                 key={category.id}
-                                onClick={() => setSelectedCategory(category.id as Category)}
+                                onClick={() => {
+                                    setSelectedCategory(category.id as Category);
+                                    setSelectedTrailerId(null); // Reset selection on filter change
+                                }}
                                 className={clsx(
                                     "whitespace-nowrap transition-colors pb-1 border-b-2",
                                     selectedCategory === category.id
@@ -101,10 +149,57 @@ export default function Rentals() {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                                {filteredTrailers.map((trailer, index) => (
-                                    <ProductCard key={trailer.id} trailer={trailer} index={index} />
-                                ))}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 items-start relative">
+                                {filteredTrailers.map((trailer, index) => {
+                                    const isSelected = selectedTrailerId === trailer.id;
+
+                                    // Logic to determine where to render the Details component
+                                    const selectedIndex = filteredTrailers.findIndex(t => t.id === selectedTrailerId);
+
+                                    // Default card render if nothing selected
+                                    if (selectedTrailerId === null || selectedIndex === -1) {
+                                        return (
+                                            <div key={trailer.id} onClick={() => setSelectedTrailerId(trailer.id)}>
+                                                <ProductCard trailer={trailer} index={index} />
+                                            </div>
+                                        );
+                                    }
+
+                                    // Logic for insertion
+                                    const rowStart = Math.floor(selectedIndex / numColumns) * numColumns;
+                                    const rowEnd = Math.min(rowStart + numColumns - 1, filteredTrailers.length - 1);
+                                    const shouldRenderDetailsHere = index === rowEnd;
+
+                                    // Calculate arrow position based on column index
+                                    // 0 -> 1/6 (16.67%), 1 -> 3/6 (50%), 2 -> 5/6 (83.33%) for 3 cols
+                                    // Formula: ((index % cols) + 0.5) / cols * 100
+                                    const colIndex = selectedIndex % numColumns;
+                                    const arrowPos = `${((colIndex + 0.5) / numColumns) * 100}%`;
+
+                                    return (
+                                        <React.Fragment key={trailer.id}>
+                                            <div
+                                                onClick={() => setSelectedTrailerId(isSelected ? null : trailer.id)}
+                                                className={clsx(
+                                                    "transition-all duration-300",
+                                                    isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-[#F5F5F5] rounded-xl relative z-10" : "opacity-100"
+                                                )}
+                                            >
+                                                <ProductCard trailer={trailer} index={index} />
+                                            </div>
+
+                                            {shouldRenderDetailsHere && (
+                                                <div className="col-span-1 md:col-span-2 lg:col-span-3 w-full animate-fade-in-up">
+                                                    <TrailerDetails
+                                                        trailer={filteredTrailers[selectedIndex]}
+                                                        onClose={() => setSelectedTrailerId(null)}
+                                                        arrowLeft={arrowPos}
+                                                    />
+                                                </div>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
                             </div>
 
                             {/* Pagination */}
@@ -161,8 +256,6 @@ export default function Rentals() {
                     )}
                 </div>
             </div>
-
-
         </Layout>
     );
 }

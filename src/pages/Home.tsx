@@ -1,10 +1,10 @@
 
-// Default Imports
 import Layout from '../components/layout/Layout';
 import Hero from '../components/home/Hero';
 import Benefits from '../components/home/Benefits';
 import CorporateFleet from '../components/home/CorporateFleet';
-import Steps from '../components/home/Steps';
+import HowItWorks from '../components/home/HowItWorks';
+import Testimonials from '../components/home/Testimonials';
 import OrangeBanner from '../components/home/OrangeBanner';
 
 export default function Home() {
@@ -13,9 +13,9 @@ export default function Home() {
             <Hero />
             <Benefits />
             <CorporateFleet />
-            <Steps />
+            <HowItWorks />
+            <Testimonials />
             <OrangeBanner />
-            {/* Testimonials would go here */}
         </Layout>
     );
 }

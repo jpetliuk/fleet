@@ -6,14 +6,26 @@ export interface Trailer {
     name: string;
     type: 'Road Trailer' | 'Storage Trailer' | 'Flatbed';
     image: string;
+    allImages: string[];
     price: string;
     description: string;
     ezRentOutLink: string;
+    specs: string[];
 }
 
 
 // Let's use a nice semi-truck image as requested
 const GENERIC_TRAILER = "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80";
+
+const getTrueKey = (obj: any): string | null => {
+    if (!obj) return null;
+    for (const key in obj) {
+        if (obj[key] === "true" && key !== 'N/A' && key !== 'Other' && key !== 'False') {
+            return key;
+        }
+    }
+    return null;
+};
 
 const mapAssetToTrailer = (asset: any, subdomain: string): Trailer => {
     // Try to find a valid image URL
@@ -22,20 +34,56 @@ const mapAssetToTrailer = (asset: any, subdomain: string): Trailer => {
     // Use generic image if the found image is the 'no-image' placeholder
     const finalImage = (!validImage || validImage.includes('no-image')) ? GENERIC_TRAILER : validImage;
 
+    // Collect all images for the gallery
+    const allImages = [finalImage];
+    if (asset.images && Array.isArray(asset.images)) {
+        asset.images.forEach((img: any) => {
+            if (img.url && img.url !== finalImage && !img.url.includes('no-image')) {
+                allImages.push(img.url);
+            }
+        });
+    }
+    // If we still only have one image, maybe duplicate it or add placeholders for the "gallery" feel if requested, 
+    // but for now let's stick to real data or just the one.
+
     // Construct description
     let desc = asset.description || asset.name;
     if (asset.Year && asset.Model) {
         desc = `${asset.Year} ${asset.Model} - ${desc}`;
     }
 
+    // Extract Specs
+    const specs: string[] = [];
+
+    const length = getTrueKey(asset.Length);
+    if (length) specs.push(length);
+
+    const ride = getTrueKey(asset.Ride);
+    if (ride) specs.push(ride);
+
+    const doors = getTrueKey(asset.Doors);
+    if (doors) specs.push(`${doors} Door`);
+
+    const roof = getTrueKey(asset.Roof);
+    if (roof) specs.push(`${roof} Roof`);
+
+    const walls = getTrueKey(asset.Walls);
+    if (walls) specs.push(`${walls} Walls`);
+
+    if (asset.Vin) specs.push(`VIN: ${asset.Vin}`);
+    if (asset.Year) specs.push(`Year: ${asset.Year}`);
+
+
     return {
         id: asset.id || asset.sequence_num || `mock-${Math.random()}`,
         name: asset.name,
         type: mapCategory(asset.group_name),
         image: finalImage,
+        allImages: allImages,
         price: asset.rental_prices?.monthly ? (asset.rental_prices.monthly === "0.0" ? "Call for pricing" : `$${asset.rental_prices.monthly}/mo`) : "Call for pricing",
         description: desc,
-        ezRentOutLink: `https://${subdomain}.ezrentout.com/item/view/${asset.sequence_num || asset.id}`
+        ezRentOutLink: `https://${subdomain}.ezrentout.com/item/view/${asset.sequence_num || asset.id}`,
+        specs: specs
     };
 };
 

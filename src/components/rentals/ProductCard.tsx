@@ -6,11 +6,10 @@ interface ProductCardProps {
     index: number;
 }
 
-export default function ProductCard({ trailer, index }: ProductCardProps) {
+export default function ProductCard({ trailer }: ProductCardProps) {
     return (
         <div
-            className="bg-[#1A1A1A] rounded-xl overflow-hidden flex flex-col group cursor-pointer border border-white/5 hover:border-gray-600 transition-all h-full animate-fade-in opacity-0 fill-mode-forwards"
-            style={{ animationDelay: `${index * 50}ms` }}
+            className="bg-[#1A1A1A] rounded-xl overflow-hidden flex flex-col group cursor-pointer border border-white/5 hover:border-gray-600 transition-all h-full"
         >
             {/* Header */}
             <div className="p-4 md:p-5 relative z-10">

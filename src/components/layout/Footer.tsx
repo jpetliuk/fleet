@@ -25,7 +25,7 @@ export default function Footer() {
                         </div>
                         <div className="text-xs text-gray-500 pt-2">
                             <p>Se Habla Español</p>
-                            <p>Closed on the Sabbath</p>
+                            <p>Closed on Sabbath</p>
                         </div>
                     </div>
 

@@ -9,7 +9,7 @@ export default function Benefits() {
 
                     <div className="flex gap-4 items-start">
                         <div className="p-3 bg-gray-100 rounded-full">
-                            <Globe2 className="w-6 h-6 text-gray-700" />
+                            <Globe2 className="w-6 h-6 text-primary" />
                         </div>
                         <div>
                             <h3 className="font-bold text-lg mb-1">Serving since 1969</h3>
@@ -19,7 +19,7 @@ export default function Benefits() {
 
                     <div className="flex gap-4 items-start">
                         <div className="p-3 bg-gray-100 rounded-full">
-                            <ShieldCheck className="w-6 h-6 text-gray-700" />
+                            <ShieldCheck className="w-6 h-6 text-primary" />
                         </div>
                         <div>
                             <h3 className="font-bold text-lg mb-1">Full Service Maintenance</h3>
@@ -29,7 +29,7 @@ export default function Benefits() {
 
                     <div className="flex gap-4 items-start">
                         <div className="p-3 bg-gray-100 rounded-full">
-                            <HeartHandshake className="w-6 h-6 text-gray-700" />
+                            <HeartHandshake className="w-6 h-6 text-primary" />
                         </div>
                         <div>
                             <h3 className="font-bold text-lg mb-1">Flexible Terms</h3>

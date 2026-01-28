@@ -1,18 +1,47 @@
-
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import logo from '../../assets/logo.png';
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+
+    useEffect(() => {
+        const controlNavbar = () => {
+            if (typeof window !== 'undefined') {
+                // Determine scrolling direction and position
+                const currentScrollY = window.scrollY;
+
+                if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                    // Scrolling down & past threshold: hide navbar
+                    setIsVisible(false);
+                    setIsOpen(false); // Close mobile menu if open when scrolling down
+                } else {
+                    // Scrolling up or at top: show navbar
+                    setIsVisible(true);
+                }
+
+                setLastScrollY(currentScrollY);
+            }
+        };
+
+        window.addEventListener('scroll', controlNavbar);
+
+        return () => {
+            window.removeEventListener('scroll', controlNavbar);
+        };
+    }, [lastScrollY]);
 
     return (
-        <nav className="bg-[#1A1A1A]/90 backdrop-blur-md text-white sticky top-0 z-50 border-b border-white/10">
+        <nav
+            className={`bg-[#1A1A1A]/90 backdrop-blur-md text-white sticky top-0 z-50 border-b border-white/10 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'
+                }`}
+        >
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center h-20">
-                    {/* Logo */}
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-3">
                         <img
@@ -36,9 +65,9 @@ export default function Navbar() {
 
                     {/* CTA Button */}
                     <div className="hidden md:block">
-                        <button className="border border-white/30 hover:border-primary hover:text-primary hover:bg-white/5 transition-all text-sm font-semibold px-5 py-2.5 rounded-full">
-                            Check Availability
-                        </button>
+                        <Link to="/login" className="border border-white/30 hover:border-primary hover:text-primary hover:bg-white/5 transition-all text-sm font-semibold px-5 py-2.5 rounded-full">
+                            Client Login
+                        </Link>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -58,9 +87,9 @@ export default function Navbar() {
                         <Link to="/" className="text-gray-300 hover:text-primary sticky" onClick={() => setIsOpen(false)}>Home</Link>
                         <Link to="/about" className="text-gray-300 hover:text-primary sticky" onClick={() => setIsOpen(false)}>About</Link>
                         <Link to="/rentals" className="text-gray-300 hover:text-primary" onClick={() => setIsOpen(false)}>Trailer Rentals</Link>
-                        <button className="bg-primary text-white font-semibold py-3 rounded-lg w-full">
-                            Check Availability
-                        </button>
+                        <Link to="/login" className="bg-primary text-white font-semibold py-3 rounded-lg w-full text-center block" onClick={() => setIsOpen(false)}>
+                            Client Login
+                        </Link>
                     </div>
                 </div>
             )}

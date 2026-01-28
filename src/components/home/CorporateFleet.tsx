@@ -1,5 +1,5 @@
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 import { Link } from 'react-router-dom';
 
 export default function CorporateFleet() {
@@ -64,11 +64,7 @@ export default function CorporateFleet() {
 
                 <div className="flex justify-between items-center text-xs text-gray-500 mb-8">
                     <div className="flex gap-2">
-                        <span>*Flexible terms available. Ask about our referral incentive!</span>
-                    </div>
-                    <div className="flex gap-2">
-                        <button className="p-2 hover:bg-white/10 rounded-full"><ChevronLeft size={16} /></button>
-                        <button className="p-2 hover:bg-white/10 rounded-full"><ChevronRight size={16} /></button>
+                        <span>*Flexible terms available.</span>
                     </div>
                 </div>
 
