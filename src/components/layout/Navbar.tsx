@@ -68,12 +68,18 @@ export default function Navbar() {
                     {/* CTA Button */}
                     <div className="hidden md:block">
                         {isAuthenticated ? (
-                            <Link to="/dashboard" className="border border-white/30 hover:border-primary hover:text-primary hover:bg-white/5 transition-all text-sm font-semibold px-5 py-2.5 rounded-full">
-                                My Dashboard
+                            <Link
+                                to="/dashboard"
+                                className="bg-primary text-white hover:bg-[#3b82f6] px-6 py-2.5 rounded-full font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 hover:shadow-primary/40 active:translate-y-0 cursor-pointer text-sm"
+                            >
+                                Dashboard
                             </Link>
                         ) : (
-                            <Link to="/login" className="border border-white/30 hover:border-primary hover:text-primary hover:bg-white/5 transition-all text-sm font-semibold px-5 py-2.5 rounded-full">
-                                Client Login
+                            <Link
+                                to="/login"
+                                className="bg-primary text-white hover:bg-[#3b82f6] px-6 py-2.5 rounded-full font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 hover:shadow-primary/40 active:translate-y-0 cursor-pointer text-sm"
+                            >
+                                Sign In
                             </Link>
                         )}
                     </div>
@@ -97,16 +103,16 @@ export default function Navbar() {
                         <Link to="/rentals" className="text-gray-300 hover:text-primary" onClick={() => setIsOpen(false)}>Trailer Rentals</Link>
                         {isAuthenticated ? (
                             <>
-                                <Link to="/dashboard" className="bg-white/10 text-white font-semibold py-3 rounded-lg w-full text-center block hover:bg-white/20" onClick={() => setIsOpen(false)}>
-                                    My Dashboard
+                                <Link to="/dashboard" className="bg-primary text-white font-semibold py-3 rounded-lg w-full text-center block hover:bg-primary-hover shadow-lg shadow-primary/20" onClick={() => setIsOpen(false)}>
+                                    Dashboard
                                 </Link>
-                                <button onClick={() => { logout(); setIsOpen(false); }} className="bg-primary text-white font-semibold py-3 rounded-lg w-full text-center block">
+                                <button onClick={() => { logout(); setIsOpen(false); }} className="bg-white/10 text-white font-semibold py-3 rounded-lg w-full text-center block hover:bg-white/20">
                                     Log Out
                                 </button>
                             </>
                         ) : (
-                            <Link to="/login" className="bg-primary text-white font-semibold py-3 rounded-lg w-full text-center block" onClick={() => setIsOpen(false)}>
-                                Client Login
+                            <Link to="/login" className="bg-primary text-white font-semibold py-3 rounded-lg w-full text-center block hover:bg-primary-hover shadow-lg shadow-primary/20" onClick={() => setIsOpen(false)}>
+                                Sign In
                             </Link>
                         )}
                     </div>

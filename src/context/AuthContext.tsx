@@ -12,6 +12,12 @@ interface User {
     address?: string;
     city?: string;
     state?: string;
+    notifyRentalStatus?: boolean;
+    notifyPayments?: boolean;
+    notifyDeadlines?: boolean;
+    notifyPromos?: boolean;
+    notifyNewsletter?: boolean;
+    cdlStatus?: 'NONE' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 }
 
 interface AuthContextType {
